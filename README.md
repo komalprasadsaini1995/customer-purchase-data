@@ -1,2 +1,1 @@
-# customer-purchase-data
-customer purchase data
+This project involves analyzing customer purchase data to extract meaningful insights that can help businesses understand buying behavior, segment customers, and improve decision-making. Using Python, the data is cleaned, explored, and visualized to identify patterns such as top-selling products, customer lifetime value, seasonal trends, and purchase frequency. The project may also include predictive modeling to forecast future sales or recommend products based on customer history.
