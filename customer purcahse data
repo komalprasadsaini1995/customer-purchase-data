@@ -1,0 +1,365 @@
+Construct week project-- komal prasad saini
+Importing Library
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import sqlalchemy
+import pymysql
+Creating Connection between SQL & Python
+engine = sqlalchemy.create_engine('mysql+pymysql://root:12345@localhost:3306/myproject')
+#Loading Tables from 'myproject' database
+customers = pd.read_sql_table("customers", engine)
+products = pd.read_sql_table("products", engine)
+purchases = pd.read_sql_table("purchases", engine)
+Shape & Head
+customers.shape, products.shape, purchases.shape
+((1000, 3), (1000, 4), (1000, 6))
+Datatype
+customers.info()
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 1000 entries, 0 to 999
+Data columns (total 3 columns):
+ #   Column        Non-Null Count  Dtype 
+---  ------        --------------  ----- 
+ 0   customerid    1000 non-null   int64 
+ 1   customername  1000 non-null   object
+ 2   country       1000 non-null   object
+dtypes: int64(1), object(2)
+memory usage: 23.6+ KB
+products.info()
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 1000 entries, 0 to 999
+Data columns (total 4 columns):
+ #   Column           Non-Null Count  Dtype 
+---  ------           --------------  ----- 
+ 0   productid        1000 non-null   int64 
+ 1   productname      1000 non-null   object
+ 2   productcategory  1000 non-null   object
+ 3   customerid       1000 non-null   int64 
+dtypes: int64(2), object(2)
+memory usage: 31.4+ KB
+purchases.info()
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 1000 entries, 0 to 999
+Data columns (total 6 columns):
+ #   Column            Non-Null Count  Dtype         
+---  ------            --------------  -----         
+ 0   transactionid     1000 non-null   int64         
+ 1   customerid        1000 non-null   int64         
+ 2   productid         1000 non-null   int64         
+ 3   purchasequantity  1000 non-null   int64         
+ 4   purchaseprice     1000 non-null   float64       
+ 5   purchasedate      1000 non-null   datetime64[ns]
+dtypes: datetime64[ns](1), float64(1), int64(4)
+memory usage: 47.0 KB
+We can see there are three format of data types and no null value is present
+
+object: Object format means variables are categorical. Categorical variables.
+int64: It represents the integer variables.
+float64: It represents the decimal variables.
+Specifying Date format
+purchases['purchasedate'] = pd.to_datetime(purchases['purchasedate'], format='mixed', dayfirst=True)
+Reading Our Dataset
+customers.head()
+customerid	customername	country
+0	100	Ryan Wiley	Senegal
+1	101	Crystal Roberts	British Indian Ocean Territory
+2	102	Christina Vargas	Romania
+3	103	Kevin Gordon	Malta
+4	104	Christopher Roach	Niger
+products.head()
+productid	productname	productcategory	customerid
+0	200	Air Conditioner	Home Appliances	133
+1	201	Air Conditioner	Home Appliances	161
+2	202	Air Conditioner	Home Appliances	167
+3	203	Air Conditioner	Home Appliances	208
+4	204	Air Conditioner	Home Appliances	218
+purchases.head()
+transactionid	customerid	productid	purchasequantity	purchaseprice	purchasedate
+0	1	825	795	5	689.99	2024-03-01
+1	2	719	313	4	79.27	2024-01-26
+2	3	1003	429	3	666.75	2024-05-13
+3	4	348	913	5	316.19	2023-09-21
+4	5	716	1090	4	700.24	2024-01-25
+Combining the three datasets
+Cleaning Whitespace from column
+customers.columns = customers.columns.str.strip()
+products.columns = products.columns.str.strip()
+purchases.columns = purchases.columns.str.strip()
+Merging data
+data_ = pd.merge(customers, products, on='customerid', how='left')
+combined_df = pd.merge(data_, purchases, on='productid', how='left')
+combined_df.info
+<bound method DataFrame.info of      customerid_x       customername                         country  \
+0             100         Ryan Wiley                         Senegal   
+1             101    Crystal Roberts  British Indian Ocean Territory   
+2             102   Christina Vargas                         Romania   
+3             103       Kevin Gordon                           Malta   
+4             104  Christopher Roach                           Niger   
+..            ...                ...                             ...   
+995          1095   Tracy Fitzgerald                   Guinea-Bissau   
+996          1096   Benjamin Randall                     Philippines   
+997          1097        David Grant     French Southern Territories   
+998          1098    Kristi Williams                          Norway   
+999          1099      Alyssa Thomas                            Fiji   
+
+     productid      productname  productcategory  transactionid  customerid_y  \
+0          482           Heater  Home Appliances            224           100   
+1          998       Television      Electronics            650           101   
+2          385  Electric Kettle  Home Appliances            152           102   
+3          483           Heater  Home Appliances            376           103   
+4          895       Smartwatch      Electronics            635           104   
+..         ...              ...              ...            ...           ...   
+995       1199  Washing Machine  Home Appliances            439          1095   
+996        337           Camera      Electronics            864          1096   
+997        702          Printer      Electronics             37          1097   
+998        481       Headphones      Electronics             83          1098   
+999        756     Refrigerator  Home Appliances            854          1099   
+
+     purchasequantity  purchaseprice purchasedate  
+0                   3          54.96   2023-06-26  
+1                   1         477.05   2023-06-26  
+2                   3         579.06   2023-06-27  
+3                   3         757.42   2023-06-27  
+4                   1         316.81   2023-06-27  
+..                ...            ...          ...  
+995                 1         401.99   2024-06-24  
+996                 5         527.87   2024-06-24  
+997                 5         568.75   2024-06-25  
+998                 2         813.03   2024-06-25  
+999                 3         816.81   2024-06-25  
+
+[1000 rows x 11 columns]>
+combined_df.head()
+customerid_x	customername	country	productid	productname	productcategory	transactionid	customerid_y	purchasequantity	purchaseprice	purchasedate
+0	100	Ryan Wiley	Senegal	482	Heater	Home Appliances	224	100	3	54.96	2023-06-26
+1	101	Crystal Roberts	British Indian Ocean Territory	998	Television	Electronics	650	101	1	477.05	2023-06-26
+2	102	Christina Vargas	Romania	385	Electric Kettle	Home Appliances	152	102	3	579.06	2023-06-27
+3	103	Kevin Gordon	Malta	483	Heater	Home Appliances	376	103	3	757.42	2023-06-27
+4	104	Christopher Roach	Niger	895	Smartwatch	Electronics	635	104	1	316.81	2023-06-27
+combined_df.tail()
+customerid_x	customername	country	productid	productname	productcategory	transactionid	customerid_y	purchasequantity	purchaseprice	purchasedate
+995	1095	Tracy Fitzgerald	Guinea-Bissau	1199	Washing Machine	Home Appliances	439	1095	1	401.99	2024-06-24
+996	1096	Benjamin Randall	Philippines	337	Camera	Electronics	864	1096	5	527.87	2024-06-24
+997	1097	David Grant	French Southern Territories	702	Printer	Electronics	37	1097	5	568.75	2024-06-25
+998	1098	Kristi Williams	Norway	481	Headphones	Electronics	83	1098	2	813.03	2024-06-25
+999	1099	Alyssa Thomas	Fiji	756	Refrigerator	Home Appliances	854	1099	3	816.81	2024-06-25
+We can see there is two customerid data is present now as customerid_x and customerid_y
+
+# Drop the 'customerid_y' column
+combined_df = combined_df.drop(columns=['customerid_y'])
+# Renaming 'customerid_x' column to 'customerid'
+combined_df = combined_df.rename(columns={'customerid_x': 'customerid'})
+combined_df.head()
+customerid	customername	country	productid	productname	productcategory	transactionid	purchasequantity	purchaseprice	purchasedate
+0	100	Ryan Wiley	Senegal	482	Heater	Home Appliances	224	3	54.96	2023-06-26
+1	101	Crystal Roberts	British Indian Ocean Territory	998	Television	Electronics	650	1	477.05	2023-06-26
+2	102	Christina Vargas	Romania	385	Electric Kettle	Home Appliances	152	3	579.06	2023-06-27
+3	103	Kevin Gordon	Malta	483	Heater	Home Appliances	376	3	757.42	2023-06-27
+4	104	Christopher Roach	Niger	895	Smartwatch	Electronics	635	1	316.81	2023-06-27
+Checking for Null Values
+pd.isnull(combined_df).sum()
+customerid          0
+customername        0
+country             0
+productid           0
+productname         0
+productcategory     0
+transactionid       0
+purchasequantity    0
+purchaseprice       0
+purchasedate        0
+dtype: int64
+No null Value present
+
+#describe() for specific columns
+combined_df[['purchasequantity', 'purchaseprice']].describe()
+purchasequantity	purchaseprice
+count	1000.00000	1000.000000
+mean	3.05300	489.274720
+std	1.44162	284.504156
+min	1.00000	10.170000
+25%	2.00000	246.632500
+50%	3.00000	482.440000
+75%	4.00000	741.167500
+max	5.00000	999.980000
+Solving Question
+Calculate total purchases, total revenue, and average purchase value.
+#total_purchases
+total_purchases = combined_df['purchasequantity'].sum()
+print(f"Total Purchase: {total_purchases}")
+Total Purchase: 3053
+#total_revenue
+total_revenue = (combined_df['purchasequantity'] * combined_df['purchaseprice']).sum()
+print(f"Total Revenue: {total_revenue}")
+Total Revenue: 1485760.5499999998
+#average_purcahse_value
+Avg_purchase = round(combined_df['purchaseprice'].mean(),2)
+print(f"Average Purchase Value: {Avg_purchase}")
+Average Purchase Value: 489.27
+Identifing top customers and their purchasing behavior.
+top_customers = purchases.groupby('customerid').agg(
+    total_purchases=('purchasequantity', 'sum'),
+    total_spent=('purchaseprice', 'sum')
+).nlargest(10, 'total_spent')
+plt.savefig('top_customer.png')
+print(top_customers)
+            total_purchases  total_spent
+customerid                              
+877                       2       999.98
+367                       5       999.44
+381                       5       998.17
+173                       3       997.45
+603                       4       996.01
+971                       3       995.97
+559                       4       994.58
+1026                      5       993.55
+915                       2       992.33
+358                       4       991.08
+<Figure size 640x480 with 0 Axes>
+plt.figure(figsize=(12, 6))
+sns.barplot(x='customerid', y='total_spent', data=top_customers, color='Purple', edgecolor='black')
+plt.title('Top 10 Customers by Total Amount Spent')
+plt.xlabel('Customer ID')
+plt.ylabel('Total Amount Spent')
+plt.tight_layout()
+plt.show()
+
+purchase trends over time
+# Extracting month, quarter, and year
+combined_df['month'] = combined_df['purchasedate'].dt.month
+combined_df['quarter'] = combined_df['purchasedate'].dt.to_period('Q')
+combined_df['year'] = combined_df['purchasedate'].dt.year
+#Monthly
+monthly_trends = combined_df.groupby(['year', 'month']).agg({
+    'purchasequantity': 'sum',
+    'purchaseprice': 'sum'
+}).reset_index()
+monthly_trends['average_purchase'] = monthly_trends['purchaseprice'] / monthly_trends['purchasequantity']
+print(monthly_trends)
+    year  month  purchasequantity  purchaseprice  average_purchase
+0   2023      6                28        4012.44        143.301429
+1   2023      7               269       47956.69        178.277658
+2   2023      8               236       33493.46        141.921441
+3   2023      9               287       46764.80        162.943554
+4   2023     10               243       38368.97        157.896996
+5   2023     11               293       39839.29        135.970273
+6   2023     12               295       51910.42        175.967525
+7   2024      1               292       43575.14        149.229932
+8   2024      2               272       41393.77        152.182978
+9   2024      3               208       37442.66        180.012788
+10  2024      4               195       34165.64        175.208410
+11  2024      5               268       42799.97        159.701381
+12  2024      6               167       27551.47        164.978862
+plt.figure(figsize=(12, 6))
+sns.lineplot(x='month', y='purchaseprice', data=monthly_trends, label="Purchase price ($)", color="Red")
+plt.title('Monthly Trends:Purchase Price')
+plt.xlabel('Month')
+plt.ylabel('purchaseprice')
+plt.tight_layout()
+plt.savefig('Monthly_purchseprice.png')
+plt.show()
+
+#Quarterly
+quarterly_trends = combined_df.groupby('quarter').agg({
+    'purchasequantity': 'sum',
+    'purchaseprice': 'sum'
+}).reset_index()
+quarterly_trends['average_purchase'] = quarterly_trends['purchaseprice'] / quarterly_trends['purchasequantity']
+print(quarterly_trends)
+  quarter  purchasequantity  purchaseprice  average_purchase
+0  2023Q2                28        4012.44        143.301429
+1  2023Q3               792      128214.95        161.887563
+2  2023Q4               831      130118.68        156.580842
+3  2024Q1               772      122411.57        158.564210
+4  2024Q2               630      104517.08        165.900127
+plt.figure(figsize=(12, 6))
+quarters = quarterly_trends['quarter']
+purchase_prices = quarterly_trends['purchaseprice']
+plt.bar(range(len(quarters)), purchase_prices, color='green', edgecolor='black')
+plt.xlabel('Quarter')
+plt.ylabel('Purchase Price ($)')
+plt.title('Quarterly Trends: Purchase Price')
+plt.xticks(range(len(quarters)), quarters)
+plt.tight_layout()
+plt.savefig('Quarterly_purchseprice.png')
+plt.show()
+
+yearly_trends = combined_df.groupby(combined_df['purchasedate'].dt.year)[['purchaseprice', 'purchasequantity']].sum().reset_index()
+print(yearly_trends)
+   purchasedate  purchaseprice  purchasequantity
+0          2023      262346.07              1651
+1          2024      226928.65              1402
+plt.figure(figsize=(12, 6))
+labels = yearly_trends['purchasedate'].astype(str)
+sizes = yearly_trends['purchaseprice']
+colors = ['orange', 'blue'] 
+plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
+plt.title('Distribution of Purchase price by Year')
+plt.axis('equal')
+plt.savefig('yearly_purchaseprice.png')
+plt.show()
+
+Identify the top-performing product categories.
+top_product_categories = combined_df.groupby('productcategory').agg({
+    'purchasequantity': 'sum',
+    'purchaseprice': 'sum'
+}).reset_index()
+
+top_product_categories['average_purchase'] = top_product_categories['purchaseprice'] / top_product_categories['purchasequantity']
+print(top_product_categories)
+   productcategory  purchasequantity  purchaseprice  average_purchase
+0      Electronics              1480      248194.56        167.699027
+1  Home Appliances              1573      241080.16        153.261386
+Visualization
+plt.figure(figsize=(12, 6))
+pie_chart = plt.pie(top_product_categories['purchasequantity'],
+                  labels=top_product_categories['productcategory'],
+                  colors= ["purple", "pink"],
+                  autopct= "%1.1f%%",
+                  startangle=90)
+plt.title("Top Product Categories: Purchase Quantity Distribution")
+plt.axis('equal')
+plt.savefig('productcategory_chart.png')
+plt.show()
+
+top_product = combined_df.groupby('productname')['purchaseprice'].sum().reset_index()
+top_10 = top_product.sort_values(by='purchaseprice', ascending=False).head(10)
+print("Top 10 product by purchase price:")
+print(top_10)
+Top 10 product by purchase price:
+        productname  purchaseprice
+8         Microwave       30970.75
+14       Smartwatch       29407.68
+17          Toaster       29116.03
+6            Heater       28828.67
+5        Headphones       27748.78
+10     Refrigerator       27730.95
+9           Printer       27360.29
+16       Television       25188.60
+2            Camera       24985.70
+0   Air Conditioner       24812.05
+plt.figure(figsize=(12, 6))
+plt.bar(top_10['productname'], top_10['purchaseprice'], color='Blue')
+plt.title('Top 10 Products by Purchase Price')
+plt.xlabel('Product Name')
+plt.ylabel('Total Purchase Price')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.savefig('top_products_chart.png')
+plt.show()
+
+Key Insight Report
+Total Purchases: 3053
+Total Revenue: 1,485,760.54
+Average Purchase Value: 489.29
+Purchase_trend over time:
+
+Monthly Trend in 2023: December-2023 saw the highest purchase quantity (295 units) , purchase price of 51910.42, with an average purchase value of 175.96. and lowest is the jun-2023 with the purchase quantity(28 unit) , purchase price of 4012.44 with an avg purchase value of 143.30 Purchases showed fluctuations across other months, indicating seasonal variations or promotional effects.
+
+Quarterly Trend: Q2 2023 had the lowest purchase quantity but a moderate average purchase value. Q3 and Q4 2023 showed higher quantities and revenues Q1 2024 maintained a steady purchase quantity and average purchase value.
+
+Yearly Trend: 2023 saw the highest overall purchase quantity (1,651 units) and revenue ($262,346.07), with a consistent average purchase value. 2024 started slightly lower but maintained a strong average purchase value.
+
+Top performing product Performance: Electronics: Customers made 1,480 purchases, generating 248,194.56 in revenue. On average, each purchase in this category was about 167.70. Home Appliances:This category saw 1573 purchases, totaling 241,080.16 in revenue. The average purchase here was around 153.26.
